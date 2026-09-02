@@ -1,0 +1,6 @@
+{
+  "name": "Synergy - Professional Network",
+  "description": "Ứng dụng mạng xã hội và không gian làm việc chuyên nghiệp phong cách Clean Minimalism hiện đại với 5 phân hệ: Bản tin, Tin nhắn, Danh bạ, Ứng dụng nội bộ và Hồ sơ cá nhân.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
