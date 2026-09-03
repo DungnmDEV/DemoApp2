@@ -75,7 +75,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               children: [
                 _buildNavItem(0, CupertinoIcons.news, CupertinoIcons.news_solid, 'Feed'),
                 _buildNavItem(1, CupertinoIcons.chat_bubble_2, CupertinoIcons.chat_bubble_2_fill, 'Messages'),
-                _buildNavItem(2, CupertinoIcons.square_grid_3x3, CupertinoIcons.square_grid_3x3_fill, 'Apps'),
+                _buildNavItem(2, CupertinoIcons.grid_circle, CupertinoIcons.grid_circle_fill, 'Apps'),
                 _buildNavItem(3, CupertinoIcons.person_crop_square, CupertinoIcons.person_crop_square_fill, 'Contacts'),
                 _buildNavItem(4, CupertinoIcons.person, CupertinoIcons.person_fill, 'Profile'),
               ],
