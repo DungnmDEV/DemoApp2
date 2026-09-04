@@ -1,16 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'mock_data.dart';
+import 'api_service.dart';
+import 'login_screen.dart';
+import 'package:android_intent_plus/android_intent.dart';
+import 'dart:io' show Platform;
 
 void main() {
   runApp(const SynergyApp());
 }
 
-class SynergyApp extends StatelessWidget {
+class SynergyApp extends StatefulWidget {
   const SynergyApp({super.key});
 
   @override
+  State<SynergyApp> createState() => _SynergyAppState();
+}
+
+class _SynergyAppState extends State<SynergyApp> {
+  bool _isAuthenticated = false;
+  bool _isChecking = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final token = await ApiService().getToken();
+    setState(() {
+      _isAuthenticated = token != null;
+      _isChecking = false;
+    });
+  }
+
+  void _onLoginSuccess() {
+    setState(() => _isAuthenticated = true);
+  }
+
+  void _onLogout() async {
+    await ApiService().logout();
+    setState(() => _isAuthenticated = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isChecking) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: const Color(0xFF1D4ED8)),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
       title: 'Synergy',
       debugShowCheckedModeBanner: false,
@@ -30,13 +76,16 @@ class SynergyApp extends StatelessWidget {
           iconTheme: IconThemeData(color: Color(0xFF1E293B)),
         ),
       ),
-      home: const MainNavigationScreen(),
+      home: _isAuthenticated
+          ? MainNavigationScreen(onLogout: _onLogout)
+          : LoginScreen(onLoginSuccess: _onLoginSuccess),
     );
   }
 }
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final VoidCallback onLogout;
+  const MainNavigationScreen({super.key, required this.onLogout});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
@@ -45,13 +94,19 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = [
-    const FeedTabScreen(),
-    const MessagesTabScreen(),
-    const AppsTabScreen(),
-    const ContactsTabScreen(),
-    const ProfileTabScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      const FeedTabScreen(),
+      const MessagesTabScreen(),
+      const AppsTabScreen(),
+      const ContactsTabScreen(),
+      ProfileTabScreen(onLogout: widget.onLogout),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1073,6 +1128,38 @@ class AppsTabScreen extends StatelessWidget {
             showArrow: true,
           ),
 
+          // QL Kho (DemoApp1)
+          _buildAppCard(
+            title: 'QL Kho (DemoApp1)',
+            description: 'Hệ thống quản lý kho thông minh, tích hợp đồng bộ dữ liệu thời gian thực.',
+            icon: CupertinoIcons.archivebox_fill,
+            iconBg: const Color(0xFFFEF3C7),
+            iconColor: const Color(0xFFD97706),
+            badge: 'LINKED',
+            badgeColor: const Color(0xFFFFFBEB),
+            badgeTextColor: const Color(0xFFB45309),
+            onTap: () async {
+              if (Platform.isAndroid) {
+                final token = await ApiService().getToken();
+                final username = await ApiService().getUsername();
+                final intent = AndroidIntent(
+                  action: 'android.intent.action.MAIN',
+                  package: 'com.pro.qlkho',
+                  componentName: 'com.pro.qlkho.MainActivity',
+                  arguments: {
+                    'auth_token': token ?? '',
+                    'username': username ?? '',
+                    'source_app': 'Synergy'
+                  },
+                );
+                await intent.launch();
+              } else {
+                // Mock for other platforms
+                debugPrint('Launching DemoApp1 with token passing...');
+              }
+            },
+          ),
+
           // Coming Soon AI Assistant Banner
           Container(
             margin: const EdgeInsets.only(bottom: 24),
@@ -1169,65 +1256,69 @@ class AppsTabScreen extends StatelessWidget {
     Color? badgeColor,
     Color? badgeTextColor,
     bool showArrow = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
-                ),
-              ),
-              if (badge != null)
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: badgeColor,
+                    color: iconBg,
                     borderRadius: BorderRadius.circular(12),
                   ),
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
                   child: Text(
-                    badge,
-                    style: TextStyle(color: badgeTextColor, fontSize: 11, fontWeight: FontWeight.w700),
+                    title,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
                   ),
                 ),
-              if (showArrow)
-                const Icon(CupertinoIcons.chevron_right, size: 16, color: Color(0xFF94A3B8)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            description,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
-          ),
-        ],
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      badge,
+                      style: TextStyle(color: badgeTextColor, fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                if (showArrow)
+                  const Icon(CupertinoIcons.chevron_right, size: 16, color: Color(0xFF94A3B8)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              description,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1494,7 +1585,8 @@ class ContactsTabScreen extends StatelessWidget {
 
 // ---------------- 5. PROFILE TAB SCREEN ----------------
 class ProfileTabScreen extends StatefulWidget {
-  const ProfileTabScreen({super.key});
+  final VoidCallback onLogout;
+  const ProfileTabScreen({super.key, required this.onLogout});
 
   @override
   State<ProfileTabScreen> createState() => _ProfileTabScreenState();
@@ -1534,8 +1626,9 @@ class _ProfileTabScreenState extends State<ProfileTabScreen> with SingleTickerPr
         ),
         actions: [
           IconButton(
-            icon: const Icon(CupertinoIcons.search, size: 22),
-            onPressed: () {},
+            onPressed: widget.onLogout,
+            icon: const Icon(CupertinoIcons.square_arrow_right, color: Color(0xFF64748B)),
+            tooltip: 'Sign Out',
           ),
           const SizedBox(width: 8),
         ],

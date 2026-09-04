@@ -472,6 +472,17 @@ export const mockApps: AppToolItem[] = [
     badge: 'COMING SOON',
     badgeType: 'soon',
     actionType: 'arrow'
+  },
+  {
+    id: 'app-demo-1',
+    title: 'QL Kho (DemoApp1)',
+    description: 'Hệ thống quản lý kho thông minh, tích hợp đồng bộ dữ liệu thời gian thực.',
+    category: 'Management',
+    iconName: 'Package',
+    badge: 'LINKED',
+    badgeType: 'active',
+    actionType: 'open',
+    usageCount: 'Enterprise'
   }
 ];
 

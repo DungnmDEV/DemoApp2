@@ -7,7 +7,9 @@ import {
   Layers, 
   ExternalLink,
   Sparkles,
-  Download
+  Download,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
 import { MobileFrame } from './components/MobileFrame';
 import { DesktopView } from './components/DesktopView';
@@ -19,7 +21,9 @@ import { ProfileTab } from './components/ProfileTab';
 import { StoryViewerModal } from './components/StoryViewerModal';
 import { CreatePostModal } from './components/CreatePostModal';
 import { FlutterCodeModal } from './components/FlutterCodeModal';
-import { 
+import LoginView from './components/LoginView';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import {
   mockStories, 
   mockPosts, 
   mockActiveUsers, 
@@ -29,7 +33,10 @@ import {
 } from './data/mockData';
 import { StoryItem, PostItem, ChatConversation } from './types';
 
-export default function App() {
+function AppContent() {
+  // Auth state
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+
   // Navigation and view state
   const [activeTab, setActiveTab] = useState<'feed' | 'messages' | 'apps' | 'contacts' | 'profile'>('feed');
   const [displayMode, setDisplayMode] = useState<'mobile' | 'desktop'>('mobile');
@@ -44,6 +51,18 @@ export default function App() {
   const [posts, setPosts] = useState<PostItem[]>(mockPosts);
   const [conversations, setConversations] = useState<ChatConversation[]>(mockConversations);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginView />;
+  }
 
   // Like toggle
   const handleToggleLike = (postId: string) => {
@@ -198,6 +217,21 @@ export default function App() {
             <span>Mã nguồn Flutter (Dart)</span>
           </button>
 
+          {/* User Info & Logout */}
+          <div className="flex items-center gap-3 pl-2 border-l border-slate-800 ml-2">
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-xs font-bold text-white leading-tight">{user?.username}</span>
+              <span className="text-[10px] text-slate-400 leading-tight uppercase tracking-wider">{user?.type}</span>
+            </div>
+            <button
+              onClick={logout}
+              className="rounded-xl bg-slate-800/50 p-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+
           {/* Reset Demo State Button */}
           <button
             onClick={handleResetData}
@@ -341,5 +375,13 @@ export default function App() {
         onClose={() => setFlutterModalOpen(false)}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

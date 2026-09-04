@@ -12,10 +12,13 @@ import {
   Plus,
   CheckCircle2,
   Clock,
-  BarChart3
+  BarChart3,
+  Package,
+  ExternalLink
 } from 'lucide-react';
 import { AppToolItem } from '../types';
 import { currentUser } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
 
 interface AppsTabProps {
   apps: AppToolItem[];
@@ -23,6 +26,7 @@ interface AppsTabProps {
 }
 
 export const AppsTab: React.FC<AppsTabProps> = ({ apps, onNavigateToProfile }) => {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('All Apps');
   const [activeModalApp, setActiveModalApp] = useState<AppToolItem | null>(null);
 
@@ -42,6 +46,8 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, onNavigateToProfile }) =
         return <BookOpen className="h-5 w-5 text-purple-600" />;
       case 'Sparkles':
         return <Sparkles className="h-5 w-5 text-blue-300" />;
+      case 'Package':
+        return <Package className="h-5 w-5 text-amber-600" />;
       default:
         return <CheckSquare className="h-5 w-5 text-[#0068FF]" />;
     }
@@ -59,6 +65,8 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, onNavigateToProfile }) =
         return 'bg-indigo-100';
       case 'BookOpen':
         return 'bg-purple-100';
+      case 'Package':
+        return 'bg-amber-100';
       default:
         return 'bg-blue-100';
     }
@@ -268,7 +276,12 @@ export const AppsTab: React.FC<AppsTabProps> = ({ apps, onNavigateToProfile }) =
 
               <div className="pt-2 flex gap-3">
                 <button
-                  onClick={() => setActiveModalApp(null)}
+                  onClick={() => {
+                    if (activeModalApp.id === 'app-demo-1') {
+                      alert(`Redirecting to QL Kho (DemoApp1)...\nUser: ${user?.username}\nToken: MOCK_TOKEN_PASSING`);
+                    }
+                    setActiveModalApp(null);
+                  }}
                   className="flex-1 rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
                 >
                   Launch {activeModalApp.title}
